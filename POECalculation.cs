@@ -12,7 +12,7 @@ namespace POEClassLibrary
 
         public int RemainingSelfStudyCalculation(DateTime currentDate, string moduleNames)
         {
-            //__________________code attribution______________________
+            //__________________code attribution______________
             //The following method was taken from Code Project
             //Author: dillip.aim11
             //Link: https://www.codeproject.com/Questions/312829/get-first-and-last-date-of-week-by-passing-week-nu
@@ -21,7 +21,7 @@ namespace POEClassLibrary
             //__________________end______________________
 
 
-            //__________________code attribution______________________
+            //__________________code attribution________________
             //The following method was taken from Stack Overflow
             //Author: Tim Schmelter
             //Link: https://stackoverflow.com/questions/18375752/filter-large-list-based-on-date-time
@@ -30,7 +30,7 @@ namespace POEClassLibrary
                 .ToList();
             //__________________end______________________
 
-            //__________________code attribution______________________
+            //__________________code attribution________________
             //The following method was taken from Stack Overflow
             //Author: Diana Ionita
             //Link: https://stackoverflow.com/questions/16100900/select-multiple-fields-group-by-and-sum

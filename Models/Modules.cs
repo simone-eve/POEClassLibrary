@@ -8,13 +8,14 @@ namespace POEClassLibrary.Models
 {
     public class Modules
     {
-        public Modules(string moduleCode, string moduleName, int numberOfCredits, int weeklyClassHours, int selfStudyHours)
+        public Modules(string moduleCode, string moduleName, int numberOfCredits, int weeklyClassHours, int selfStudyHours, int totalSelfStudyHours)
         {
             ModuleCode = moduleCode;
             ModuleName = moduleName;
             NumberOfCredits = numberOfCredits;
             WeeklyClassHours = weeklyClassHours;
             SelfStudyHours = selfStudyHours;
+            TotalSelfStudyHours = totalSelfStudyHours;
         }
 
         public string ModuleCode { get; set; }
@@ -22,5 +23,6 @@ namespace POEClassLibrary.Models
         public int NumberOfCredits { get; set; }
         public int WeeklyClassHours { get; set; }
         public int SelfStudyHours { get; set; }
+        public int TotalSelfStudyHours { get; set; }
     }
 }
