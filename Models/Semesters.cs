@@ -8,6 +8,7 @@ namespace POEClassLibrary.Models
 {
     public class Semesters
     {
+        //properties for the semester class
         public Semesters(int numberOfWeeks, DateTime startDate)
         {
             NumberOfWeeks = numberOfWeeks;

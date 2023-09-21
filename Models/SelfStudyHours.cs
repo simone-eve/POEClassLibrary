@@ -8,6 +8,7 @@ namespace POEClassLibrary.Models
 {
     public class SelfStudyHours
     {
+        //properties for the self study class
         public SelfStudyHours(string moduleName, int numberofStudyHours, DateTime studyDate)
         {
             ModuleName = moduleName;

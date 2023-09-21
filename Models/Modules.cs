@@ -8,6 +8,7 @@ namespace POEClassLibrary.Models
 {
     public class Modules
     {
+        //properties for the module class
         public Modules(string moduleCode, string moduleName, int numberOfCredits, int weeklyClassHours, int selfStudyHours, int totalSelfStudyHours)
         {
             ModuleCode = moduleCode;
