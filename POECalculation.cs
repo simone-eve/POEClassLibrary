@@ -1,9 +1,11 @@
 ﻿using POEClassLibrary.Utils;
+using System.Data.SqlClient;
 
 namespace POEClassLibrary
 {
     public class POECalculation
     {
+        public SqlConnection sqlConnection;
         //calculation to work out the self study hours
         public int SelfStudyCalculation(int numberCredits, int semesterWeek, int weeklyHours)
         {
@@ -62,6 +64,38 @@ namespace POEClassLibrary
             }
 
             return remainingHours;
+        }
+
+        public int GetUserId(string username, string password)
+        {
+            using (SqlConnection connection = new SqlConnection(Connection.Conn))
+            {
+                connection.Open();
+
+                // Define the SQL query to retrieve the users_id based on username and password.
+                string query = "SELECT users_id FROM Registered_User WHERE username = @Username AND password = @Password";
+
+                using (SqlCommand command = new SqlCommand(query, connection))
+                {
+                    // Set the parameters for username and password.
+                    command.Parameters.Add(new SqlParameter("@Username", username));
+                    command.Parameters.Add(new SqlParameter("@Password", password)); // Note: You should store and compare passwords securely in a real application.
+
+                    // Execute the query and retrieve the users_id.
+                    object result = command.ExecuteScalar();
+
+                    if (result != null)
+                    {
+                        // A matching user was found, and you have their users_id.
+                        return (int)result;
+                    }
+                    else
+                    {
+                        // No matching user found.
+                        return -1; // You can choose to handle this case differently if needed.
+                    }
+                }
+            }
         }
     }
 }
