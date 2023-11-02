@@ -1,4 +1,6 @@
-﻿using POEClassLibrary.Utils;
+﻿using POEClassLibrary.Models;
+using POEClassLibrary.Utils;
+using System.Data;
 using System.Data.SqlClient;
 
 namespace POEClassLibrary
@@ -14,57 +16,85 @@ namespace POEClassLibrary
         }
 
         //calculation to work out how many self study hours are remaining after the user has tracked hours 
-        public int RemainingSelfStudyCalculation(DateTime currentDate, string moduleNames)
+        public int RemainingSelfStudyCalculation(DateTime currentDate, string moduleNames, int userId)
         {
-            //__________________code attribution______________
-            //The following method was taken from Code Project
-            //Author: dillip.aim11
-            //Link: https://www.codeproject.com/Questions/312829/get-first-and-last-date-of-week-by-passing-week-nu
-            DateTime firstDay = currentDate.AddDays(-(int)currentDate.DayOfWeek);//working out the start of the week
-            DateTime endDay = firstDay.AddDays(6);//working out the end of the week
-            //__________________end______________________
-
-
-            //__________________code attribution________________
-            //The following method was taken from Stack Overflow
-            //Author: Tim Schmelter
-            //Link: https://stackoverflow.com/questions/18375752/filter-large-list-based-on-date-time
-            var studyRecord = ModelUtils.hours //filtering for the modules selected week
-                .Where(record => record.StudyDate.Date >= firstDay && record.StudyDate.Date <= endDay) //code attribution
-                .ToList();
-            //__________________end______________________
-
-            //__________________code attribution________________
-            //The following method was taken from Stack Overflow
-            //Author: Diana Ionita
-            //Link: https://stackoverflow.com/questions/16100900/select-multiple-fields-group-by-and-sum
-            var totalStudyHours = studyRecord //calculating the total hours for the week
-                .GroupBy(record => record.ModuleName)
-                .Select(g => new
-                {
-                    Key = g.Key,
-                    hours = g.Sum(s => s.NumberofStudyHours),
-                    ModuleName = g.First().ModuleName
-                })
-             .FirstOrDefault(item => item.ModuleName == moduleNames);
-            //__________________end______________________
-
-            var updateList = ModelUtils.module.FirstOrDefault(record => record.ModuleName == moduleNames); //filtering the list of modules 
-
-
-            var ModulesResult = from i in ModelUtils.module
-                                where i.ModuleName == moduleNames
-                                select i;
-
             int remainingHours = 0;
-            foreach (var module in ModulesResult)
+
+            using (SqlConnection connection = new SqlConnection(Connection.Conn))
             {
-                remainingHours = module.SelfStudyHours - totalStudyHours.hours; //calculating the remaining hours of the week
-                updateList.SelfStudyHours = remainingHours; //updating the list with the new self study hours
+                connection.Open();
+
+                // Calculate the first and last day of the current week
+                DateTime firstDay = currentDate.AddDays(-(int)currentDate.DayOfWeek);
+                DateTime endDay = firstDay.AddDays(6);
+
+                // Query the database to retrieve study records for the selected week
+                string selectStudyRecordsQuery = "SELECT module_name, self_study_hours  FROM module " +
+                    "WHERE StudyDate >= @StartDate AND StudyDate <= @EndDate AND UserID = @UserID";
+
+                using (SqlCommand command = new SqlCommand(selectStudyRecordsQuery, connection))
+                {
+                    command.Parameters.Add("@StartDate", SqlDbType.DateTime).Value = firstDay;
+                    command.Parameters.Add("@EndDate", SqlDbType.DateTime).Value = endDay;
+                    command.Parameters.Add("@UserID", SqlDbType.Int).Value = userId;
+
+                    using (SqlDataReader reader = command.ExecuteReader())
+                    {
+                        // Calculate total study hours for the selected week
+                        var totalStudyHours = new Dictionary<string, int>();
+                        while (reader.Read())
+                        {
+                            string moduleName = reader["ModuleName"].ToString();
+                            int studyHours = Convert.ToInt32(reader["NumberofStudyHours"]);
+
+                            if (totalStudyHours.ContainsKey(moduleName))
+                            {
+                                totalStudyHours[moduleName] += studyHours;
+                            }
+                            else
+                            {
+                                totalStudyHours[moduleName] = studyHours;
+                            }
+                        }
+
+                        // Calculate the remaining self-study hours for the specified module
+                        if (totalStudyHours.ContainsKey(moduleNames))
+                        {
+                            int totalModuleStudyHours = totalStudyHours[moduleNames];
+
+                            // Retrieve the initial self-study hours from the Modules table
+                            string selectSelfStudyHoursQuery = "SELECT SelfStudyHours FROM Modules WHERE ModuleName = @ModuleName AND UserID = @UserID";
+                            using (SqlCommand selfStudyHoursCommand = new SqlCommand(selectSelfStudyHoursQuery, connection))
+                            {
+                                selfStudyHoursCommand.Parameters.Add("@ModuleName", SqlDbType.VarChar).Value = moduleNames;
+                                selfStudyHoursCommand.Parameters.Add("@UserID", SqlDbType.Int).Value = userId;
+
+                                object selfStudyHoursObj = selfStudyHoursCommand.ExecuteScalar();
+                                if (selfStudyHoursObj != DBNull.Value)
+                                {
+                                    int initialSelfStudyHours = Convert.ToInt32(selfStudyHoursObj);
+                                    remainingHours = initialSelfStudyHours - totalModuleStudyHours;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Update the Modules table with the new self-study hours
+                string updateSelfStudyHoursQuery = "UPDATE module SET SelfStudyHours = @SelfStudyHours " +
+                    "WHERE ModuleName = @ModuleName AND UserID = @UserID";
+                using (SqlCommand updateCommand = new SqlCommand(updateSelfStudyHoursQuery, connection))
+                {
+                    updateCommand.Parameters.Add("@SelfStudyHours", SqlDbType.Int).Value = remainingHours;
+                    updateCommand.Parameters.Add("@ModuleName", SqlDbType.VarChar).Value = moduleNames;
+                    updateCommand.Parameters.Add("@UserID", SqlDbType.Int).Value = userId;
+                    updateCommand.ExecuteNonQuery();
+                }
             }
 
             return remainingHours;
         }
+
 
         public int GetUserId(string username, string password)
         {
@@ -97,5 +127,26 @@ namespace POEClassLibrary
                 }
             }
         }
+
+        public bool DoesUserHaveSemesterInfo(int userId)
+        {
+            using (SqlConnection connection = new SqlConnection(Connection.Conn))
+            {
+                connection.Open();
+
+                string query = "SELECT COUNT(*) FROM semester WHERE users_id = @UserID";
+
+                using (SqlCommand command = new SqlCommand(query, connection))
+                {
+                    // Set the parameter for the user ID.
+                    command.Parameters.Add(new SqlParameter("@UserID", userId));
+
+                    int count = (int)command.ExecuteScalar();
+
+                    return count > 0;
+                }
+            }
+        }
     }
 }
+
