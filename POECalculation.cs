@@ -125,7 +125,7 @@ namespace POEClassLibrary
                 {
                     // Set the parameters for username and password.
                     command.Parameters.Add(new SqlParameter("@Username", username));
-                    command.Parameters.Add(new SqlParameter("@Password", password)); // Note: You should store and compare passwords securely in a real application.
+                    command.Parameters.Add(new SqlParameter("@Password", password)); 
 
                     // Execute the query and retrieve the users_id.
                     object result = command.ExecuteScalar();
@@ -138,7 +138,7 @@ namespace POEClassLibrary
                     else
                     {
                         // No matching user found.
-                        return -1; // You can choose to handle this case differently if needed.
+                        return -1; 
                     }
                 }
             }
