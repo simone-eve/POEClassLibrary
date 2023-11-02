@@ -8,6 +8,13 @@
 
   <ItemGroup>
     <PackageReference Include="System.Data.SqlClient" Version="4.8.5" />
+    <PackageReference Include="System.Security.Cryptography.Cng" Version="5.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="POEClassLibrary">
+      <HintPath>bin\Debug\net6.0\POEClassLibrary.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

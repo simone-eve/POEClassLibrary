@@ -2,6 +2,8 @@
 using POEClassLibrary.Utils;
 using System.Data;
 using System.Data.SqlClient;
+using System.Text;
+using System.Security.Cryptography;
 
 namespace POEClassLibrary
 {
@@ -13,6 +15,20 @@ namespace POEClassLibrary
         {
             int selfStudyHours = (((numberCredits * 10) / semesterWeek) - weeklyHours);
             return selfStudyHours;
+        }
+
+        static string GetHashPassword(string input)
+        {
+            using (SHA256 sha256Hash = SHA256.Create())
+            {
+                byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(input));
+                StringBuilder builder = new StringBuilder();
+                for (int i = 0; i < bytes.Length; i++)
+                {
+                    builder.Append(bytes[i].ToString("x2"));
+                }
+                return builder.ToString();
+            }
         }
 
         //calculation to work out how many self study hours are remaining after the user has tracked hours 
@@ -147,6 +163,36 @@ namespace POEClassLibrary
                 }
             }
         }
+
+        public int GetSemesterWeeks(int User_Id) //method to fetch the amount of semester weeks from the database
+        {
+            using (SqlConnection connection = new SqlConnection(Connection.Conn))
+            {
+                connection.Open();
+
+                string query = "SELECT semester_weeks FROM semester WHERE users_id = @UserId";
+
+                using (SqlCommand command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.Add(new SqlParameter("@UserId", User_Id));
+
+                    using (SqlDataReader reader = command.ExecuteReader())
+                    {
+                        if (reader.Read()) //error handling to ensure the application does not crash if there is no semester info in the db
+                        {
+                            return (int)reader["semester_weeks"];
+                        }
+                        else
+                        {
+
+                            throw new Exception("No semester information found for the user.");
+                        }
+                    }
+                }
+            }
+        }
+
+        
     }
 }
 
